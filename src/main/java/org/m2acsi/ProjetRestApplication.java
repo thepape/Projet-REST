@@ -10,5 +10,3 @@ public class ProjetRestApplication {
 		SpringApplication.run(ProjetRestApplication.class, args);
 	}
 }
-
-JE FAIS DES TESTS DE FDP
