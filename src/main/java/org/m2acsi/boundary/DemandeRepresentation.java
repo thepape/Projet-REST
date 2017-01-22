@@ -34,7 +34,8 @@ public class DemandeRepresentation {
 	
 	
 	@GetMapping(value="/{idDemande}")
-	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") Long id){
+	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id){
+		
 		return Optional.ofNullable(dr.findOne(id))
 				.map(d -> new ResponseEntity<>(demandeToResource(d, true), HttpStatus.OK))
 				.orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
@@ -43,8 +44,8 @@ public class DemandeRepresentation {
 	
 	@PostMapping
 	public ResponseEntity<?> sendDemande(@RequestBody Demande bodyDemande){
-		bodyDemande.setEtat(EtatDemande.DEBUT);
-		bodyDemande.setDateDemande(new Date());
+		/*bodyDemande.setEtat(EtatDemande.DEBUT);
+		bodyDemande.setDateDemande(new Date());*/
 		
 		Demande demande = dr.save(bodyDemande);
 		

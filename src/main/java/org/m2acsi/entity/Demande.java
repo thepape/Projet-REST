@@ -18,14 +18,16 @@ public class Demande {
 	//Pour JPA
 	public Demande(){
 		super();
+		this.idDemande = UUID.randomUUID().toString();
+		this.dateDemande = new Date();
+		this.etat = EtatDemande.DEBUT;
 	}
 	
 	/**
 	 * id de la demande
 	 */
-	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
-	private long idDemande;
+	@Id //@GeneratedValue(strategy=GenerationType.AUTO)
+	private String idDemande;
 	
 	/**
 	 * nom du citoyen qui a fait la demande
@@ -61,23 +63,23 @@ public class Demande {
         /**
          * Liste d'action de la demande
          */
-        private ArrayList<Action> listeAction;
+       	private ArrayList<Action> listeAction = new ArrayList<Action>();
 	
 	public Demande(String p_nom, 
 			String p_prenom,
 			String p_adresse,
-			String p_commentaire,
-                        ArrayList<Action> p_listeact){
+			String p_commentaire){
 		super();
 		
 		this.nomCitoyen = p_nom;
 		this.prenomCitoyen = p_prenom;
 		this.adresseCitoyen = p_adresse;
 		this.commentaireCitoyen = p_commentaire;
-                this.listeAction = p_listeact;
 		
 		this.dateDemande = new Date();
 		this.etat = EtatDemande.DEBUT;
+		
+		this.idDemande = UUID.randomUUID().toString();
 	}
 
 	public String getNomCitoyen() {
@@ -120,11 +122,15 @@ public class Demande {
 		this.etat = etat;
 	}
 
-	public long getIdDemande() {
+	public String getIdDemande() {
 		return idDemande;
 	}
 
 	public Date getDateDemande() {
 		return dateDemande;
+	}
+	
+	public void setDateDemande(Date date){
+		this.dateDemande = date;
 	}
 }
