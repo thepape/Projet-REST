@@ -21,7 +21,9 @@ import org.springframework.http.ResponseEntity;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -31,6 +33,13 @@ public class DemandeRepresentation {
 
 	@Autowired
 	DemandeResource dr;
+	
+	@GetMapping
+	public ResponseEntity<?> getAllDemandes(){
+		Iterable<Demande> allFormations = dr.findAll();
+		
+		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
+	}
 	
 	
 	@GetMapping(value="/{idDemande}")
@@ -44,8 +53,7 @@ public class DemandeRepresentation {
 	
 	@PostMapping
 	public ResponseEntity<?> sendDemande(@RequestBody Demande bodyDemande){
-		/*bodyDemande.setEtat(EtatDemande.DEBUT);
-		bodyDemande.setDateDemande(new Date());*/
+		
 		
 		Demande demande = dr.save(bodyDemande);
 		
@@ -62,6 +70,27 @@ public class DemandeRepresentation {
 		
 		Link selfLink = linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).withSelfRel();
 		
+		if(isCollection){
+			Link collectionLink = linkTo(methodOn(DemandeRepresentation.class)
+					.getAllDemandes())
+					.withRel("collection ");
+			
+			return new Resource<>(demande, selfLink, collectionLink);
+		}
+		
 		return new Resource<>(demande, selfLink);
+	}
+	
+	private Resources<Resource<Demande>> demandeToResource(Iterable<Demande> demandes){
+		
+		Link selfLink = linkTo(methodOn(DemandeRepresentation.class)
+				.getAllDemandes())
+				.withSelfRel();
+		
+		List<Resource<Demande>> listDemandes = new ArrayList();
+		demandes.forEach(formation -> listDemandes.add(demandeToResource(formation, false)));
+		
+		return new Resources<>(listDemandes, selfLink);
+		
 	}
 }
