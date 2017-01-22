@@ -3,6 +3,7 @@ package org.m2acsi.entity;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 
@@ -56,17 +57,24 @@ public class Demande {
 	 * état de la demande (type énuméré)
 	 */
 	private EtatDemande etat;
+        
+        /**
+         * Liste d'action de la demande
+         */
+        private ArrayList<Action> listeAction;
 	
 	public Demande(String p_nom, 
 			String p_prenom,
 			String p_adresse,
-			String p_commentaire){
+			String p_commentaire,
+                        ArrayList<Action> p_listeact){
 		super();
 		
 		this.nomCitoyen = p_nom;
 		this.prenomCitoyen = p_prenom;
 		this.adresseCitoyen = p_adresse;
 		this.commentaireCitoyen = p_commentaire;
+                this.listeAction = p_listeact;
 		
 		this.dateDemande = new Date();
 		this.etat = EtatDemande.DEBUT;
