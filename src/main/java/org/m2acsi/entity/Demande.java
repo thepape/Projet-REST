@@ -21,6 +21,8 @@ public class Demande {
 		this.idDemande = UUID.randomUUID().toString();
 		this.dateDemande = new Date();
 		this.etat = EtatDemande.DEBUT;
+
+		this.listeAction = new ArrayList<Action>();
 	}
 	
 	/**
@@ -61,9 +63,9 @@ public class Demande {
 	private EtatDemande etat;
         
         /**
-         * Liste d'action de la demande
+         * Liste d'actions de la demande
          */
-       	private ArrayList<Action> listeAction = new ArrayList<Action>();
+       	private ArrayList<Action> listeAction;
 	
 	public Demande(String p_nom, 
 			String p_prenom,
@@ -78,6 +80,7 @@ public class Demande {
 		
 		this.dateDemande = new Date();
 		this.etat = EtatDemande.DEBUT;
+		this.listeAction = new ArrayList<Action>();
 		
 		this.idDemande = UUID.randomUUID().toString();
 	}

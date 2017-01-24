@@ -4,7 +4,7 @@ public enum TypeAction {
 	ETUDE("Etude"),
 	APPROBATION("Approbation"),
         REFUS("Refus"),
-        CREACOMMANDE("Creation d'une commande");
+        CREATION_COMMANDE("Creation d'une commande");
         
 	
 	private String nom = "";

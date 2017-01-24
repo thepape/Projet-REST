@@ -17,9 +17,8 @@ public class Action {
     /**
      * id de l'action
      */
-    @Id
-    @GeneratedValue(strategy=GenerationType.AUTO)
-    private long IdAction;
+    @Id //@GeneratedValue(strategy=GenerationType.AUTO)
+    private String IdAction;
     
     /**
      * nom de l'action
@@ -38,7 +37,9 @@ public class Action {
      */
     private Date dateAction;
     
-  public Action(String p_nom, String p_etat){
+    private TypeAction type;
+    
+  public Action(String p_nom, String p_etat, TypeAction type){
       super();
       
       this.nomAction = p_nom;
@@ -46,17 +47,25 @@ public class Action {
       this.dateAction = new Date();
   }
 
-    /**
+    public TypeAction getType() {
+	return type;
+}
+
+public void setType(TypeAction type) {
+	this.type = type;
+}
+
+	/**
      * @return the IdAction
      */
-    public long getIdAction() {
+    public String getIdAction() {
         return IdAction;
     }
 
     /**
      * @param IdAction the IdAction to set
      */
-    public void setIdAction(long IdAction) {
+    public void setIdAction(String IdAction) {
         this.IdAction = IdAction;
     }
 
