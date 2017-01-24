@@ -128,6 +128,10 @@ public class Demande {
 	public String getIdDemande() {
 		return idDemande;
 	}
+	
+	public void setIdDemande(String id){
+		this.idDemande = id;
+	}
 
 	public Date getDateDemande() {
 		return dateDemande;
