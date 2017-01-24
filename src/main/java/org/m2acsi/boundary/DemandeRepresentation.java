@@ -34,27 +34,6 @@ public class DemandeRepresentation {
 	@Autowired
 	DemandeResource dr;
 	
-	@GetMapping
-	public ResponseEntity<?> getAllDemandes(){
-		Iterable<Demande> allFormations = dr.findAll();
-		
-		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
-	}
-	
-	/**
-	 * GET | /demandes/{id} | Suivre sa demande | 2
-	 * @param id
-	 * @return
-	 */
-	@GetMapping(value="/{idDemande}")
-	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id){
-		
-		return Optional.ofNullable(dr.findOne(id))
-				.map(d -> new ResponseEntity<>(demandeToResource(d, true), HttpStatus.OK))
-				.orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
-		
-	}
-	
 	/**
 	 * POST | /demandes | Déposer une demande | 1
 	 * @param bodyDemande
@@ -69,6 +48,20 @@ public class DemandeRepresentation {
 		responseHeaders.setLocation(linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).toUri());
 		
 		return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
+	}
+	
+	/**
+	 * GET | /demandes/{id} | Suivre sa demande | 2
+	 * @param id
+	 * @return
+	 */
+	@GetMapping(value="/{idDemande}")
+	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id){
+		
+		return Optional.ofNullable(dr.findOne(id))
+				.map(d -> new ResponseEntity<>(demandeToResource(d, true), HttpStatus.OK))
+				.orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+		
 	}
 	
 	/**
@@ -106,6 +99,31 @@ public class DemandeRepresentation {
 		
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
+	
+	/***
+	 * GET | /demandes | Acceder aux demandes | 5
+	 * @return
+	 */
+	@GetMapping
+	public ResponseEntity<?> getAllDemandes(){
+		Iterable<Demande> allFormations = dr.findAll();
+		
+		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
+	}
+	
+	/**
+	 * GET | /demandes/?status={status} | Acceder aux demandes | 5
+	 * @param id
+	 * @return
+	 */
+	@GetMapping(value="/?status={status}")
+	public ResponseEntity<?> getDemandeByStatus(@PathVariable("status") String statuss){
+		
+		Iterable<Demande> allFormations = dr.findAll();
+		
+		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
+	}
+	
 	
 	////////////////// HATEOAS ///////////////////
 	
