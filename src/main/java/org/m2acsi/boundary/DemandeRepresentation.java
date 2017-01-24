@@ -16,15 +16,22 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.http.ResponseEntity;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 @RestController
 @RequestMapping(value="/demandes", produces=MediaType.APPLICATION_JSON_VALUE)
@@ -33,6 +40,10 @@ public class DemandeRepresentation {
 
 	@Autowired
 	DemandeResource dr;
+	
+	@PersistenceContext
+	EntityManager em;
+	
 	
 	/**
 	 * POST | /demandes | Déposer une demande | 1
@@ -106,8 +117,8 @@ public class DemandeRepresentation {
 	 */
 	@GetMapping
 	public ResponseEntity<?> getAllDemandes(){
-		Iterable<Demande> allFormations = dr.findAll();
 		
+		Iterable<Demande> allFormations = dr.findAll();
 		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
 	}
 	
@@ -116,13 +127,29 @@ public class DemandeRepresentation {
 	 * @param id
 	 * @return
 	 */
-	@GetMapping(value="/?status={status}")
-	public ResponseEntity<?> getDemandeByStatus(@PathVariable("status") String statuss){
+	@RequestMapping(method=RequestMethod.GET, params = {"status"})
+	public ResponseEntity<?> getDemandeByStatus(@RequestParam(value="status") String status){
 		
-		Iterable<Demande> allFormations = dr.findAll();
+		EtatDemande etatDemande = null;
 		
-		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
+		try{
+			
+			etatDemande = EtatDemande.valueOf(status);
+			
+		}catch(IllegalArgumentException e){
+			//si l'etat passe en parametre n'existe pas, on retourne une erreur 400
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+		
+		Query query = em.createNamedQuery("demandesParEtat");
+		query.setParameter("etat", etatDemande);
+		
+		Iterable<Demande> resultat = query.getResultList();
+		
+		return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
 	}
+	
+	
 	
 	
 	////////////////// HATEOAS ///////////////////

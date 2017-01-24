@@ -11,6 +11,11 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.NamedQuery;
+
+@NamedQuery(name="demandesParEtat",
+		query = " SELECT d FROM Demande d WHERE"
+				+ " d.etat = :etat")
 
 @Entity
 public class Demande {
