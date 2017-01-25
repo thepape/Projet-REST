@@ -6,6 +6,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
 
 @Entity
 public class Action {
@@ -39,11 +40,23 @@ public class Action {
     
     private TypeAction type;
     
+    public Demande getDemande() {
+		return demande;
+	}
+
+	public void setDemande(Demande demande) {
+		this.demande = demande;
+	}
+
+	@ManyToOne
+    private Demande demande;
+    
   public Action(String p_nom, String p_etat, TypeAction type){
       super();
       
       this.nomAction = p_nom;
       this.etatAction = "EN COURS";
+      this.type = type;
       this.dateAction = new Date();
   }
 

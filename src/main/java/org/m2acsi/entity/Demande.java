@@ -5,6 +5,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.Entity;
@@ -12,6 +13,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
+import javax.persistence.OneToMany;
 
 @NamedQuery(name="demandesParEtat",
 		query = " SELECT d FROM Demande d WHERE"
@@ -70,7 +72,8 @@ public class Demande {
         /**
          * Liste d'actions de la demande
          */
-       	private ArrayList<Action> listeAction;
+	@OneToMany(mappedBy="demande")
+       	private List<Action> listeAction;
 	
 	public Demande(String p_nom, 
 			String p_prenom,
@@ -144,5 +147,24 @@ public class Demande {
 	
 	public void setDateDemande(Date date){
 		this.dateDemande = date;
+	}
+	
+	public void ajouterAction(Action action){
+		this.listeAction.add(action);
+		action.setDemande(this);
+		
+		if(action.getType().equals(TypeAction.CLOTURE)){
+			this.etat = EtatDemande.FIN;
+		}
+	}
+	
+	public boolean estClose(){
+		Action lastAction = this.listeAction.get(this.listeAction.size()-1);
+		
+		if(lastAction.getType().equals(TypeAction.CLOTURE)){
+			return true;
+		}
+		
+		return false;
 	}
 }

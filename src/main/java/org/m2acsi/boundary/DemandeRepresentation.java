@@ -9,6 +9,7 @@ import org.springframework.hateoas.Resources;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -100,7 +101,7 @@ public class DemandeRepresentation {
 		
 		//si l'etat de la demande est autre que DEBUT, on ne peut pas modifier la demande
 		if(!oldDemande.getEtat().equals(EtatDemande.DEBUT)){
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
 		}
 		
 		bodyDemande.setIdDemande(id);
@@ -147,6 +148,32 @@ public class DemandeRepresentation {
 		Iterable<Demande> resultat = query.getResultList();
 		
 		return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
+	}
+	
+	/**
+	 * DELETE | /demandes/{id} | Clore une demande | 10
+	 * @param id
+	 * @return
+	 */
+	@DeleteMapping(value="{idDemande}")
+	public ResponseEntity<?> cloreDemande(@PathVariable("idDemande") String id){
+		
+		//objet introuvable pour cet id
+		if(!dr.exists(id)){
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+				
+		Demande demande = dr.findOne(id);
+				
+		Action cloture = new Action("CLOTURE","TERMINE", TypeAction.CLOTURE);
+		demande.ajouterAction(cloture);
+		
+		dr.save(demande);
+		
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.setLocation(linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).toUri());
+				
+		return new ResponseEntity<>(null, responseHeaders, HttpStatus.OK);
 	}
 	
 	
