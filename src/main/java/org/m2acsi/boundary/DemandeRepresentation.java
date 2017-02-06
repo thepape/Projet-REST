@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +43,9 @@ public class DemandeRepresentation {
 	@Autowired
 	DemandeResource dr;
 	
+	@Autowired
+	TokenRepository tr;
+	
 	@PersistenceContext
 	EntityManager em;
 	
@@ -55,11 +59,18 @@ public class DemandeRepresentation {
 	public ResponseEntity<?> sendDemande(@RequestBody Demande bodyDemande){
 		
 		Demande demande = dr.save(bodyDemande);
+	
+		//Liaison d'un token a cette demande dans la table TOKEN 
+		Token token = new Token();
+		token.setIdDemande(demande.getIdDemande());
+		tr.save(token);
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.setLocation(linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).toUri());
 		
-		return new ResponseEntity<>(null, responseHeaders, HttpStatus.CREATED);
+		String message = "{ \"idDemande\" : \""+demande.getIdDemande()+"\", \"token\" : \""+token.getToken()+"\" }";
+		
+		return new ResponseEntity<>(message, responseHeaders, HttpStatus.CREATED);
 	}
 	
 	/**
@@ -68,7 +79,17 @@ public class DemandeRepresentation {
 	 * @return
 	 */
 	@GetMapping(value="/{idDemande}")
-	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id){
+	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id, @RequestHeader("Authorization") String token){
+		
+		Query query = em.createNamedQuery("verifyToken");
+		query.setParameter("idDemande", id);
+		query.setParameter("token", token);
+		
+		boolean tokenIsValid = ( Integer.parseInt(query.getSingleResult().toString()) == 1);
+		
+		if(!tokenIsValid){
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
 		
 		return Optional.ofNullable(dr.findOne(id))
 				.map(d -> new ResponseEntity<>(demandeToResource(d, true), HttpStatus.OK))
