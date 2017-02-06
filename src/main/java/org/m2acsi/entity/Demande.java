@@ -1,6 +1,8 @@
 package org.m2acsi.entity;
 
 
+import java.math.BigInteger;
+import java.security.SecureRandom;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,13 +27,10 @@ public class Demande {
 	//Pour JPA
 	public Demande(){
 		super();
-		this.idDemande = UUID.randomUUID().toString();
-		this.dateDemande = new Date();
-		this.etat = EtatDemande.DEBUT;
-
-		this.listeAction = new ArrayList<Action>();
+		
+		this.init();
 	}
-	
+
 	/**
 	 * id de la demande
 	 */
@@ -86,11 +85,15 @@ public class Demande {
 		this.adresseCitoyen = p_adresse;
 		this.commentaireCitoyen = p_commentaire;
 		
+		this.init();
+	}
+	
+	private void init(){
 		this.dateDemande = new Date();
 		this.etat = EtatDemande.DEBUT;
 		this.listeAction = new ArrayList<Action>();
 		
-		this.idDemande = UUID.randomUUID().toString();
+		this.idDemande = UUID.randomUUID().toString().replaceAll("-", "");
 	}
 
 	public String getNomCitoyen() {

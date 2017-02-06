@@ -2,6 +2,8 @@
 package org.m2acsi.entity;
 
 import java.util.Date;
+import java.util.UUID;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -13,6 +15,8 @@ public class Action {
     
     public Action(){
         super();
+        
+        this.init();
     }
     
     /**
@@ -58,6 +62,12 @@ public class Action {
       this.etatAction = "EN COURS";
       this.type = type;
       this.dateAction = new Date();
+      
+      this.init();
+  }
+  
+  public void init(){
+	  this.IdAction = UUID.randomUUID().toString().replaceAll("-", "");
   }
 
     public TypeAction getType() {
