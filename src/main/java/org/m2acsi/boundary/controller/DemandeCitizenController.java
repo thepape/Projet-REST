@@ -1,5 +1,7 @@
-package org.m2acsi.boundary;
+package org.m2acsi.boundary.controller;
 
+import org.m2acsi.boundary.DemandeRepository;
+import org.m2acsi.boundary.TokenRepository;
 import org.m2acsi.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.ExposesResourceFor;
@@ -36,12 +38,12 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 @RestController
-@RequestMapping(value="/demandes", produces=MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value="citizen/demandes", produces=MediaType.APPLICATION_JSON_VALUE)
 @ExposesResourceFor(Demande.class)
-public class DemandeRepresentation {
+public class DemandeCitizenController {
 
 	@Autowired
-	DemandeResource dr;
+	DemandeRepository dr;
 	
 	@Autowired
 	TokenRepository tr;
@@ -66,7 +68,7 @@ public class DemandeRepresentation {
 		tr.save(token);
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.setLocation(linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).toUri());
+		responseHeaders.setLocation(linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).toUri());
 		
 		String message = "{ \"idDemande\" : \""+demande.getIdDemande()+"\", \"token\" : \""+token.getToken()+"\" }";
 		
@@ -79,7 +81,7 @@ public class DemandeRepresentation {
 	 * @return
 	 */
 	@GetMapping(value="/{idDemande}")
-	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id, @RequestHeader("Authorization") String token){
+	public ResponseEntity<?> getOneDemandeCitizen(@PathVariable("idDemande") String id, @RequestHeader("Citizen-token") String token){
 		
 		Query query = em.createNamedQuery("verifyToken");
 		query.setParameter("idDemande", id);
@@ -104,7 +106,7 @@ public class DemandeRepresentation {
 	 * @return
 	 */
 	@RequestMapping(method=RequestMethod.PUT, value="/{idDemande}")
-	public ResponseEntity<?> updateDemande(@RequestBody Demande bodyDemande, @PathVariable("idDemande") String id){
+	public ResponseEntity<?> updateDemande(@RequestBody Demande bodyDemande, @PathVariable("idDemande") String id, @RequestHeader("Citizen-token") String token){
 		
 		//tester si deja en base ou present dans le body
 		Optional<Demande> body = Optional.ofNullable(bodyDemande);
@@ -116,6 +118,16 @@ public class DemandeRepresentation {
 		//objet introuvable pour cet id
 		if(!dr.exists(id)){
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Query query = em.createNamedQuery("verifyToken");
+		query.setParameter("idDemande", id);
+		query.setParameter("token", token);
+		
+		boolean tokenIsValid = ( Integer.parseInt(query.getSingleResult().toString()) == 1);
+		
+		if(!tokenIsValid){
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 		}
 		
 		Demande oldDemande = dr.findOne(id);
@@ -133,81 +145,21 @@ public class DemandeRepresentation {
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 	
-	/***
-	 * GET | /demandes | Acceder aux demandes | 5
-	 * @return
-	 */
-	@GetMapping
 	public ResponseEntity<?> getAllDemandes(){
 		
-		Iterable<Demande> allFormations = dr.findAll();
-		return new  ResponseEntity<>(demandeToResource(allFormations), HttpStatus.OK);
+		Iterable<Demande> allDemandes = dr.findAll();
+		return new  ResponseEntity<>(demandeToResource(allDemandes), HttpStatus.OK);
 	}
-	
-	/**
-	 * GET | /demandes/?status={status} | Acceder aux demandes | 5
-	 * @param id
-	 * @return
-	 */
-	@RequestMapping(method=RequestMethod.GET, params = {"status"})
-	public ResponseEntity<?> getDemandeByStatus(@RequestParam(value="status") String status){
-		
-		EtatDemande etatDemande = null;
-		
-		try{
-			
-			etatDemande = EtatDemande.valueOf(status);
-			
-		}catch(IllegalArgumentException e){
-			//si l'etat passe en parametre n'existe pas, on retourne une erreur 400
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-		
-		Query query = em.createNamedQuery("demandesParEtat");
-		query.setParameter("etat", etatDemande);
-		
-		Iterable<Demande> resultat = query.getResultList();
-		
-		return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
-	}
-	
-	/**
-	 * DELETE | /demandes/{id} | Clore une demande | 10
-	 * @param id
-	 * @return
-	 */
-	@DeleteMapping(value="{idDemande}")
-	public ResponseEntity<?> cloreDemande(@PathVariable("idDemande") String id){
-		
-		//objet introuvable pour cet id
-		if(!dr.exists(id)){
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-				
-		Demande demande = dr.findOne(id);
-				
-		Action cloture = new Action("CLOTURE","TERMINE", TypeAction.CLOTURE);
-		demande.ajouterAction(cloture);
-		
-		dr.save(demande);
-		
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.setLocation(linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).toUri());
-				
-		return new ResponseEntity<>(null, responseHeaders, HttpStatus.OK);
-	}
-	
-	
-	
 	
 	////////////////// HATEOAS ///////////////////
 	
 	private Resource<Demande> demandeToResource(Demande demande, Boolean isCollection){
+		//A modifier ici !
 		
-		Link selfLink = linkTo(DemandeRepresentation.class).slash(demande.getIdDemande()).withSelfRel();
+		Link selfLink = linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).withSelfRel();
 		
 		if(isCollection){
-			Link collectionLink = linkTo(methodOn(DemandeRepresentation.class)
+			Link collectionLink = linkTo(methodOn(DemandeCitizenController.class)
 					.getAllDemandes())
 					.withRel("collection ");
 			
@@ -219,7 +171,7 @@ public class DemandeRepresentation {
 	
 	private Resources<Resource<Demande>> demandeToResource(Iterable<Demande> demandes){
 		
-		Link selfLink = linkTo(methodOn(DemandeRepresentation.class)
+		Link selfLink = linkTo(methodOn(DemandeCitizenController.class)
 				.getAllDemandes())
 				.withSelfRel();
 		
