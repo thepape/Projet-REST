@@ -6,12 +6,14 @@ import java.security.SecureRandom;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
+import javax.persistence.Table;
 
 @NamedQuery(name="verifyToken",
 query = " SELECT COUNT(t) FROM Token t WHERE"
 		+ " t.idDemande = :idDemande AND t.token = :token")
 
 @Entity
+@Table(name="Token")
 public class Token {
 
 	public Token(){

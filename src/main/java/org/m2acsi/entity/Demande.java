@@ -16,12 +16,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 @NamedQuery(name="demandesParEtat",
 		query = " SELECT d FROM Demande d WHERE"
 				+ " d.etat = :etat")
 
 @Entity
+@Table(name="Demande")
 public class Demande {
 
 	//Pour JPA
