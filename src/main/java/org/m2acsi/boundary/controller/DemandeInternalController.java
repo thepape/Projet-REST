@@ -3,7 +3,9 @@ package org.m2acsi.boundary.controller;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.methodOn;
 
+import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,6 +28,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,9 +40,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping(value="user/demandes", produces=MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value="internal/demandes", produces=MediaType.APPLICATION_JSON_VALUE)
 @ExposesResourceFor(Demande.class)
-public class DemandeUserController {
+public class DemandeInternalController {
 
 	@Autowired
 	DemandeRepository dr;
@@ -111,6 +115,12 @@ public class DemandeUserController {
 	@DeleteMapping(value="{idDemande}")
 	public ResponseEntity<?> cloreDemande(@PathVariable("idDemande") String id){
 		
+		//on verifie que l'utilisateur possede bien la permission de delete.
+		//Deja verifie dans le service OAuth mais bon, ceintures et bretelles !
+		if(!possedePrivilege("perm_delete_demande")){
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+		
 		//objet introuvable pour cet id
 		if(!dr.exists(id)){
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -129,16 +139,24 @@ public class DemandeUserController {
 		return new ResponseEntity<>(null, responseHeaders, HttpStatus.OK);
 	}
 	
+	private boolean possedePrivilege(String privilege){
+		return getAuthorities().contains(new SimpleGrantedAuthority(privilege));
+	}
 	
+	private Collection<SimpleGrantedAuthority> getAuthorities(){
+		Collection<SimpleGrantedAuthority> authorities = (Collection<SimpleGrantedAuthority>) SecurityContextHolder.getContext().getAuthentication().getAuthorities();
+	
+		return authorities;
+	}
 	
 	//////////////////HATEOAS ///////////////////
 		
 	private Resource<Demande> demandeToResource(Demande demande, Boolean isCollection){
 		
-		Link selfLink = linkTo(DemandeUserController.class).slash(demande.getIdDemande()).withSelfRel();
+		Link selfLink = linkTo(DemandeInternalController.class).slash(demande.getIdDemande()).withSelfRel();
 		
 		if(isCollection){
-			Link collectionLink = linkTo(methodOn(DemandeUserController.class)
+			Link collectionLink = linkTo(methodOn(DemandeInternalController.class)
 					.getAllDemandes())
 					.withRel("collection ");
 			
@@ -150,7 +168,7 @@ public class DemandeUserController {
 	
 	private Resources<Resource<Demande>> demandeToResource(Iterable<Demande> demandes){
 		
-		Link selfLink = linkTo(methodOn(DemandeUserController.class)
+		Link selfLink = linkTo(methodOn(DemandeInternalController.class)
 			.getAllDemandes())
 			.withSelfRel();
 		
