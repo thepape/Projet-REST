@@ -42,29 +42,10 @@ public class ResourceServerConfig {
         			.antMatchers(HttpMethod.POST, "/citizen/demandes").permitAll()
         			.antMatchers(HttpMethod.GET, "/citizen/demandes/{id}").permitAll()
         			.antMatchers(HttpMethod.PUT, "/citizen/demandes/{id}").permitAll()
-        		.and()
-        		.authorizeRequests()
-        			.antMatchers("/user/**").authenticated();
+        			.antMatchers(HttpMethod.GET, "/internal/**").authenticated()
+        			.antMatchers(HttpMethod.DELETE, "/internal/demandes/{id}").hasAuthority("perm_delete_demande")
+        			.antMatchers(HttpMethod.POST, "/internal/demandes/{id}/actions").authenticated();
         }
-    }
-    
-    private static class OAuthCitizenRequestMatcher implements RequestMatcher {
-
-		@Override
-		public boolean matches(HttpServletRequest request) {
-			String token = request.getHeader("Citizen-token");
-			String method = request.getMethod();
-			
-			String URI = request.getRequestURI();
-			boolean correctURIFormat = URI.matches("/demandes/[a-z0-9]+");
-			
-			boolean isCitizen = (token != null 
-					&& (method.equals("GET") || method.equals("PUT"))
-					&& correctURIFormat);
-			
-			return isCitizen;
-		}
-    	
     }
     
 }
