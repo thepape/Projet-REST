@@ -106,6 +106,47 @@ public class DemandeInternalController {
 		
 		return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
 	}
+        
+	/**
+	 * POST | /demandes/{id}/actions | Confirmer réparation | 4
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(method=RequestMethod.GET, params = {"status"})
+	public ResponseEntity<?> postDemandeByAction(@RequestParam(value="status") String status){
+            
+            TypeAction typeAction = null;
+            
+            try{
+                typeAction = TypeAction.valueOf(status);
+            }catch(IllegalArgumentException e){
+ 		//si l'etat passe en parametre n'existe pas, on retourne une erreur 400
+		return new ResponseEntity<>(HttpStatus.BAD_REQUEST);               
+            }
+            
+            Query query = em.createNamedQuery("demandesParEtat");
+            query.setParameter("etat", etatDemande);
+		
+            Iterable<Demande> resultat = query.getResultList();
+                
+            return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
+        }
+        
+        /**
+	 * GET | /demandes/{id}/actions | Accéder aux commandes | 5
+	 * @param id
+	 * @return
+	 */
+	@RequestMapping(method=RequestMethod.GET, params = {"status"})
+	public ResponseEntity<?> getDemandeByAction(@RequestParam(value="status") String status){
+         
+            Query query = em.createNamedQuery("demandesParEtat");
+            query.setParameter("etat", etatDemande);
+            
+            Iterable<Demande> resultat = query.getResultList();
+            return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
+        }
+        
 	
 	/**
 	 * DELETE | /demandes/{id} | Clore une demande | 10
