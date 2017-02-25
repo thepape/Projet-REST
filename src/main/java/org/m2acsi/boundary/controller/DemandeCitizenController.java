@@ -37,6 +37,10 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
+/**
+ * Controleur d'acces aux Demandes pour les citoyens
+ *
+ */
 @RestController
 @RequestMapping(value="citizen/demandes", produces=MediaType.APPLICATION_JSON_VALUE)
 @ExposesResourceFor(Demande.class)
@@ -70,7 +74,12 @@ public class DemandeCitizenController {
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.setLocation(linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).toUri());
 		
-		String message = "{ \"idDemande\" : \""+demande.getIdDemande()+"\", \"token\" : \""+token.getToken()+"\" }";
+		Link selfLink = linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).withSelfRel();
+		
+		//on repond avec l'id de la demande, son URI pour y acceder, et le token associe
+		String message = "{ \"idDemande\" : \""+demande.getIdDemande()+"\","
+				+ " \"uri\" : \""+selfLink.getHref()+"\", "
+				+ " \"token\" : \""+token.getToken()+"\" }";
 		
 		return new ResponseEntity<>(message, responseHeaders, HttpStatus.CREATED);
 	}
@@ -90,11 +99,11 @@ public class DemandeCitizenController {
 		boolean tokenIsValid = ( Integer.parseInt(query.getSingleResult().toString()) == 1);
 		
 		if(!tokenIsValid){
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
 		
 		return Optional.ofNullable(dr.findOne(id))
-				.map(d -> new ResponseEntity<>(demandeToResource(d, true), HttpStatus.OK))
+				.map(d -> new ResponseEntity<>(demandeToResource(d), HttpStatus.OK))
 				.orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
 		
 	}
@@ -145,40 +154,14 @@ public class DemandeCitizenController {
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 	
-	public ResponseEntity<?> getAllDemandes(){
-		
-		Iterable<Demande> allDemandes = dr.findAll();
-		return new  ResponseEntity<>(demandeToResource(allDemandes), HttpStatus.OK);
-	}
-	
 	////////////////// HATEOAS ///////////////////
 	
-	private Resource<Demande> demandeToResource(Demande demande, Boolean isCollection){
+	private Resource<Demande> demandeToResource(Demande demande){
 		//A modifier ici !
 		
 		Link selfLink = linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).withSelfRel();
 		
-		if(isCollection){
-			Link collectionLink = linkTo(methodOn(DemandeCitizenController.class)
-					.getAllDemandes())
-					.withRel("collection ");
-			
-			return new Resource<>(demande, selfLink, collectionLink);
-		}
 		
 		return new Resource<>(demande, selfLink);
-	}
-	
-	private Resources<Resource<Demande>> demandeToResource(Iterable<Demande> demandes){
-		
-		Link selfLink = linkTo(methodOn(DemandeCitizenController.class)
-				.getAllDemandes())
-				.withSelfRel();
-		
-		List<Resource<Demande>> listDemandes = new ArrayList();
-		demandes.forEach(formation -> listDemandes.add(demandeToResource(formation, false)));
-		
-		return new Resources<>(listDemandes, selfLink);
-		
 	}
 }
