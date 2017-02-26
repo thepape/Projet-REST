@@ -4,6 +4,7 @@ package org.m2acsi.entity;
 import java.util.Date;
 import java.util.UUID;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -25,26 +26,34 @@ public class Action {
      * id de l'action
      */
     @Id //@GeneratedValue(strategy=GenerationType.AUTO)
+    @Column(name="id_action")
     private String IdAction;
     
     /**
      * nom de l'action
      */
+    @Column(name="nom_action")
     private String nomAction;
     
     /**
      * etat de l'action
      * etat EN COURS et TERMINE
      */
+    @Column(name="etat_action")
     private String etatAction;
     
     /**
      * date de l'action
      * Au format JJ-MM-AAAA HH:mm:ss
      */
+    @Column(name="date_action")
     private Date dateAction;
     
+    @Column(name="type")
     private TypeAction type;
+    
+    @Column(name="responsable")
+    private String responsable;
     
     public Demande getDemande() {
 		return demande;
@@ -57,19 +66,29 @@ public class Action {
 	@ManyToOne
     private Demande demande;
     
-  public Action(String p_nom, String p_etat, TypeAction type){
+  public Action(String p_nom, String p_etat, String resp, TypeAction type){
       super();
       
       this.nomAction = p_nom;
-      this.etatAction = "EN COURS";
+      
       this.type = type;
-      this.dateAction = new Date();
+      this.responsable = resp;
       
       this.init();
   }
   
-  public void init(){
+  public String getResponsable() {
+	return responsable;
+}
+
+public void setResponsable(String responsable) {
+	this.responsable = responsable;
+}
+
+public void init(){
 	  this.IdAction = UUID.randomUUID().toString().replaceAll("-", "");
+	  this.dateAction = new Date();
+	  this.etatAction = "EN COURS";
   }
 
     public TypeAction getType() {
@@ -108,6 +127,8 @@ public void setType(TypeAction type) {
         this.etatAction = etatAction;
     }
   
-  
+    public void setNomAction(String nomAction){
+    	this.nomAction = nomAction;
+    }
   
 }
