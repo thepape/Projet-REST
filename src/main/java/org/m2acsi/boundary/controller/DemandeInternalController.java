@@ -13,6 +13,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.m2acsi.boundary.ActionRepository;
 import org.m2acsi.boundary.DemandeRepository;
 import org.m2acsi.boundary.TokenRepository;
 import org.m2acsi.entity.Action;
@@ -53,6 +54,9 @@ public class DemandeInternalController {
 	
 	@Autowired
 	TokenRepository tr;
+	
+	@Autowired
+	ActionRepository ar;
 	
 	@PersistenceContext
 	EntityManager em;
@@ -112,33 +116,65 @@ public class DemandeInternalController {
 	}
         
 /**
-	 * POST | /demandes{id}/actions | Déposer une demande | 1
+	 * POST | /demandes{id}/actions | Déposer une action | 1
 	 * @param bodyDemande
 	 * @return
 	 */
-	@PostMapping
-	public ResponseEntity<?> sendDemandeAction(@RequestBody Demande bodyDemande){
+	@PostMapping(value="/{idDemande}/actions")
+	public ResponseEntity<?> sendDemandeAction(@PathVariable("idDemande") String idDemande, @RequestBody Action bodyAction){
 		
-		Demande demande = dr.save(bodyDemande);
+		
+		//Action action = ar.save(bodyAction);
+		
+		
 	
-		//Liaison d'un token a cette demande dans la table TOKEN 
-		Token token = new Token();
-		token.setIdDemande(demande.getIdDemande());
-		tr.save(token);
+		//on recupere la demande correspondante
+		Demande demande = dr.findOne(idDemande);
+		
+		//si id de demande incorrect, not found
+		if(demande == null){
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		//on verifie si l'utilisateur a le droit de poster une action de ce type
+		//ex : perm_post_action_etude_detaillee
+		String privilegeRequis = "perm_post_action_"+ bodyAction.getType().getNomPrivilege();
+		
+		if(!this.possedePrivilege(privilegeRequis)){
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+		
+		//on ajoute le nom de l'utilisateur qui a post l'action
+		String username = this.getUsername();
+		bodyAction.setResponsable(username);
+		
+		Action action = ar.save(bodyAction);
+		
+		//on ajoute l'action a la demande
+		demande.ajouterAction(action);
+		
+		
+		
+		//sauvegarde des changements
+		dr.save(demande);
+		ar.save(action);
 		
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.setLocation(linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).toUri());
+		responseHeaders.setLocation(linkTo(DemandeCitizenController.class)
+				.slash(demande.getIdDemande())
+				.slash("actions")
+				.slash(action.getIdAction())
+				.toUri());
 		
-		String message = "{ \"idDemande\" : \""+demande.getIdDemande()+"\", \"token\" : \""+token.getToken()+"\" }";
-		
-		return new ResponseEntity<>(message, responseHeaders, HttpStatus.CREATED);
+		return new ResponseEntity<>(responseHeaders, HttpStatus.CREATED);
 	}
         
+	
         /**
 	 * GET | /demandes/{id}/actions | Accéder aux commandes | 5
 	 * @param id
 	 * @return
-	 */
+	 *//*
 	@RequestMapping(method=RequestMethod.GET, params = {"status"})
 	public ResponseEntity<?> getDemandeByAction(@RequestParam(value="status") String status){
                      
@@ -159,7 +195,7 @@ public class DemandeInternalController {
             Iterable<Demande> resultat = query.getResultList();
             return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
         }
-        
+        */
 	
 	/**
 	 * DELETE | /demandes/{id} | Clore une demande | 10
@@ -181,8 +217,10 @@ public class DemandeInternalController {
 		}
 				
 		Demande demande = dr.findOne(id);
+		
+		String username = this.getUsername();
 				
-		Action cloture = new Action("CLOTURE","TERMINE", TypeAction.CLOTURE);
+		Action cloture = new Action("CLOTURE","TERMINE", username, TypeAction.CLOTURE);
 		demande.ajouterAction(cloture);
 		
 		dr.save(demande);
@@ -195,6 +233,13 @@ public class DemandeInternalController {
 	
 	private boolean possedePrivilege(String privilege){
 		return getAuthorities().contains(new SimpleGrantedAuthority(privilege));
+	}
+	
+	private String getUsername(){
+		String username = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+		
+		
+		return username;
 	}
 	
 	private Collection<SimpleGrantedAuthority> getAuthorities(){
