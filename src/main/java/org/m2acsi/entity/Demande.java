@@ -23,8 +23,8 @@ import javax.persistence.Table;
     @NamedQuery(name="demandesParEtat",
 		query = " SELECT d FROM Demande d WHERE"
 				+ " d.etat = :etat"),
-    @NamedQuery(name="demandesParAction",
-                query="SELECT c FROM Country c WHERE c.name = :name"),
+    /*@NamedQuery(name="demandesParAction",
+                query="SELECT c FROM Country c WHERE c.name = :name"),*/
 }) 
 
 
