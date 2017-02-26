@@ -18,12 +18,14 @@ import org.m2acsi.boundary.TokenRepository;
 import org.m2acsi.entity.Action;
 import org.m2acsi.entity.Demande;
 import org.m2acsi.entity.EtatDemande;
+import org.m2acsi.entity.Token;
 import org.m2acsi.entity.TypeAction;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.ExposesResourceFor;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.Resource;
 import org.springframework.hateoas.Resources;
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -33,6 +35,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -107,30 +111,28 @@ public class DemandeInternalController {
 		return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
 	}
         
-	/**
-	 * POST | /demandes/{id}/actions | Confirmer réparation | 4
-	 * @param id
+/**
+	 * POST | /demandes{id}/actions | Déposer une demande | 1
+	 * @param bodyDemande
 	 * @return
 	 */
-	@RequestMapping(method=RequestMethod.GET, params = {"status"})
-	public ResponseEntity<?> postDemandeByAction(@RequestParam(value="status") String status){
-            
-            TypeAction typeAction = null;
-            
-            try{
-                typeAction = TypeAction.valueOf(status);
-            }catch(IllegalArgumentException e){
- 		//si l'etat passe en parametre n'existe pas, on retourne une erreur 400
-		return new ResponseEntity<>(HttpStatus.BAD_REQUEST);               
-            }
-            
-            Query query = em.createNamedQuery("demandesParEtat");
-            query.setParameter("etat", etatDemande);
+	@PostMapping
+	public ResponseEntity<?> sendDemandeAction(@RequestBody Demande bodyDemande){
 		
-            Iterable<Demande> resultat = query.getResultList();
-                
-            return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
-        }
+		Demande demande = dr.save(bodyDemande);
+	
+		//Liaison d'un token a cette demande dans la table TOKEN 
+		Token token = new Token();
+		token.setIdDemande(demande.getIdDemande());
+		tr.save(token);
+		
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.setLocation(linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).toUri());
+		
+		String message = "{ \"idDemande\" : \""+demande.getIdDemande()+"\", \"token\" : \""+token.getToken()+"\" }";
+		
+		return new ResponseEntity<>(message, responseHeaders, HttpStatus.CREATED);
+	}
         
         /**
 	 * GET | /demandes/{id}/actions | Accéder aux commandes | 5
@@ -139,8 +141,19 @@ public class DemandeInternalController {
 	 */
 	@RequestMapping(method=RequestMethod.GET, params = {"status"})
 	public ResponseEntity<?> getDemandeByAction(@RequestParam(value="status") String status){
-         
-            Query query = em.createNamedQuery("demandesParEtat");
+                     
+            		EtatDemande etatDemande = null;
+		
+		try{
+			
+			etatDemande = EtatDemande.valueOf(status);
+			
+		}catch(IllegalArgumentException e){
+			//si l'etat passe en parametre n'existe pas, on retourne une erreur 400
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		}
+                
+            Query query = em.createNamedQuery("demandesParAction");
             query.setParameter("etat", etatDemande);
             
             Iterable<Demande> resultat = query.getResultList();
