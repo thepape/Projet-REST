@@ -162,8 +162,17 @@ public class Demande {
 	}
 	
 	public void ajouterAction(Action action){
-		this.listeAction.add(action);
-		action.setDemande(this);
+		
+		//si il y avait une action avant, on passe son etat a TERMINE
+		Action lastAction = null;
+		
+		if(this.listeAction.size() > 0){
+			lastAction = this.listeAction.get(this.listeAction.size()-1);
+		}
+		
+		if(lastAction != null && lastAction.getEtatAction().equals("EN COURS")){
+			lastAction.setEtatAction("TERMINE");
+		}
 		
 		//gestion metier des modification d'etat de la demande
 		if(action.getType().equals(TypeAction.CLOTURE)){
@@ -181,6 +190,9 @@ public class Demande {
 		else if(action.getType().equals(TypeAction.REFUS)){
 			this.etat = EtatDemande.REJET;
 		}
+		
+		this.listeAction.add(action);
+		action.setDemande(this);
 	}
 	
 	public boolean estClose(){
