@@ -165,8 +165,21 @@ public class Demande {
 		this.listeAction.add(action);
 		action.setDemande(this);
 		
+		//gestion metier des modification d'etat de la demande
 		if(action.getType().equals(TypeAction.CLOTURE)){
 			this.etat = EtatDemande.FIN;
+		}
+		else if(action.getType().equals(TypeAction.ETUDE)){
+			this.etat = EtatDemande.ETUDE;
+		}
+		else if(action.getType().equals(TypeAction.ETUDE_DETAILLEE)){
+			this.etat = EtatDemande.ETUDE_DETAILLEE;
+		}
+		else if(action.getType().equals(TypeAction.APPROBATION)){
+			this.etat = EtatDemande.APPROUVEE;
+		}
+		else if(action.getType().equals(TypeAction.REFUS)){
+			this.etat = EtatDemande.REJET;
 		}
 	}
 	
