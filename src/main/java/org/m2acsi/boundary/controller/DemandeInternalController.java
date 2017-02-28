@@ -67,7 +67,7 @@ public class DemandeInternalController {
 	 * @return
 	 */
 	@GetMapping(value="/{idDemande}")
-	public ResponseEntity<?> getOneDemandeCitizen(@PathVariable("idDemande") String id){
+	public ResponseEntity<?> getOneDemande(@PathVariable("idDemande") String id){
 		
 		
 		
@@ -116,7 +116,11 @@ public class DemandeInternalController {
 	}
         
 /**
-	 * POST | /demandes{id}/actions | Déposer une action | 1
+	 * POST | /demandes{id}/actions | Confirmer réparation | 4
+	 * POST | /demandes{id}/actions | Décider de la demande | 6
+	 * POST | /demandes{id}/actions | Transmettre pour approbation | 7
+	 * POST | /demandes{id}/actions | Approuver demande | 8
+	 * 
 	 * @param bodyDemande
 	 * @return
 	 */
@@ -171,31 +175,42 @@ public class DemandeInternalController {
         
 	
         /**
-	 * GET | /demandes/{id}/actions | Accéder aux commandes | 5
+	 * GET | /demandes/{id}/actions/{id} | Accéder aux actions | 5
 	 * @param id
 	 * @return
-	 *//*
-	@RequestMapping(method=RequestMethod.GET, params = {"status"})
-	public ResponseEntity<?> getDemandeByAction(@RequestParam(value="status") String status){
+	 */
+	@RequestMapping(method=RequestMethod.GET, value="/{idDemande}/actions/{idAction}")
+	public ResponseEntity<?> getAction(@PathVariable("idDemande") String idDemande, @PathVariable("idAction") String idAction){
                      
-            		EtatDemande etatDemande = null;
-		
-		try{
-			
-			etatDemande = EtatDemande.valueOf(status);
-			
-		}catch(IllegalArgumentException e){
-			//si l'etat passe en parametre n'existe pas, on retourne une erreur 400
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-		}
-                
-            Query query = em.createNamedQuery("demandesParAction");
-            query.setParameter("etat", etatDemande);
+            Action action = ar.findOne(idAction);
+            Demande demande = dr.findOne(idDemande);
             
-            Iterable<Demande> resultat = query.getResultList();
-            return new  ResponseEntity<>(demandeToResource(resultat), HttpStatus.OK);
+            //on retourne un not found si aucune action n'existe pour cet id, si aucune demande n'existe pour cet id
+            //ou si l'id de la demande ne correspond pas a l'id de l'action
+            if(action == null || demande == null || !demande.getIdDemande().equals(action.getDemande().getIdDemande())){
+            	return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+            
+            
+            
+            return new  ResponseEntity<>(actionToResource(action, true), HttpStatus.OK);
         }
-        */
+	
+	/**
+	 * GET | /demandes/{id}/actions | Accéder aux actions | 5
+	 * @param idDemande
+	 * @param idAction
+	 * @return
+	 */
+	@RequestMapping(method=RequestMethod.GET, value="/{idDemande}/actions")
+	public ResponseEntity<?> getActionsFromDemande(@PathVariable("idDemande") String idDemande){
+                     
+            
+            Demande demande = dr.findOne(idDemande);
+            
+            return new  ResponseEntity<>(actionsToResource(demande), HttpStatus.OK);
+        }
+        
 	
 	/**
 	 * DELETE | /demandes/{id} | Clore une demande | 10
@@ -249,6 +264,37 @@ public class DemandeInternalController {
 	}
 	
 	//////////////////HATEOAS ///////////////////
+	
+	private Resource<Action> actionToResource(Action action, Boolean isCollection){
+		Link selfLink = linkTo(DemandeInternalController.class)
+				.slash(action.getDemande().getIdDemande())
+				.slash("actions")
+				.slash(action.getIdAction())
+				.withSelfRel();
+		
+		if(isCollection){
+			Link collectionLink = linkTo(methodOn(DemandeInternalController.class)
+					.getActionsFromDemande(action.getDemande().getIdDemande()))
+					.withRel("collection");
+			
+			return new Resource<>(action, selfLink, collectionLink);
+		}
+		
+		return new Resource<>(action, selfLink);
+	}
+	
+	private Resources<Resource<Action>> actionsToResource(Demande demande){
+		
+		Link selfLink = linkTo(methodOn(DemandeInternalController.class)
+			.getActionsFromDemande(demande.getIdDemande()))
+			.withSelfRel();
+		
+		List<Resource<Action>> listeActions = new ArrayList();
+		demande.getListeAction().forEach(action -> listeActions.add(actionToResource(action, false)));
+		
+		return new Resources<>(listeActions, selfLink);
+		
+	}
 		
 	private Resource<Demande> demandeToResource(Demande demande, Boolean isCollection){
 		
