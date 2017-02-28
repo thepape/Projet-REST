@@ -204,4 +204,10 @@ public class Demande {
 		
 		return false;
 	}
+
+	public List<Action> getListeAction() {
+		return listeAction;
+	}
+	
+	
 }
