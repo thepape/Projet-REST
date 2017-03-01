@@ -161,38 +161,102 @@ public class Demande {
 		this.dateDemande = date;
 	}
 	
-	public void ajouterAction(Action action){
+	public boolean ajouterAction(Action action){
 		
-		//si il y avait une action avant, on passe son etat a TERMINE
-		Action lastAction = null;
+		//////// logique metier des modification d'etat de la demande //////
+		/////// voir diagramme d'etat de Demande ///////
 		
-		if(this.listeAction.size() > 0){
-			lastAction = this.listeAction.get(this.listeAction.size()-1);
-		}
-		
-		if(lastAction != null && lastAction.getEtatAction().equals("EN COURS")){
-			lastAction.setEtatAction("TERMINE");
-		}
-		
-		//gestion metier des modification d'etat de la demande
 		if(action.getType().equals(TypeAction.CLOTURE)){
+			
+			//on ne peut clore une demande qu'une fois refusee ou approuvee
+			if(!this.etat.equals(EtatDemande.REJET) && !this.etat.equals(EtatDemande.APPROUVEE)){
+				return false;
+			}
+			
 			this.etat = EtatDemande.FIN;
+			action.setEtatAction("TERMINE");
 		}
 		else if(action.getType().equals(TypeAction.ETUDE)){
+			
+			//on ne peut mettre une demande a l'etude que si elle etait en DEBUT
+			if(!this.etat.equals(EtatDemande.DEBUT)){
+				return false;
+			}
+			
 			this.etat = EtatDemande.ETUDE;
 		}
 		else if(action.getType().equals(TypeAction.ETUDE_DETAILLEE)){
+			
+			//on ne peut mettre une demande a l'etude detaillee qu'apres etude preliminaire
+			if(!this.etat.equals(EtatDemande.ETUDE)){
+				return false;
+			}
+			
 			this.etat = EtatDemande.ETUDE_DETAILLEE;
 		}
 		else if(action.getType().equals(TypeAction.APPROBATION)){
+			
+			//on ne peut approuver une demande qu'apres etude ou etude detaillee
+			if(!this.etat.equals(EtatDemande.ETUDE) && !this.etat.equals(EtatDemande.ETUDE_DETAILLEE)){
+				return false;
+			}
+			
 			this.etat = EtatDemande.APPROUVEE;
+			action.setEtatAction("TERMINE");
 		}
 		else if(action.getType().equals(TypeAction.REFUS)){
+			
+			//on ne peut refusee une demande qu'apres etude ou etude detaillee
+			if(!this.etat.equals(EtatDemande.ETUDE) && !this.etat.equals(EtatDemande.ETUDE_DETAILLEE)){
+				return false;
+			}
+			
 			this.etat = EtatDemande.REJET;
+			action.setEtatAction("TERMINE");
+		}
+		////////////// pour les actions qui n'impactent pas l'etat, on verifie quand meme si
+		////////////// la logique metier permet l'action
+		else if(action.getType().equals(TypeAction.CREATION_ORDRE_MAINTENANCE)){
+			
+			//la creation de l'ordre de maintenance doit suivre une approbation
+			if(!this.etat.equals(EtatDemande.APPROUVEE)){
+				return false;
+			}
+		}
+		else if(action.getType().equals(TypeAction.CREATION_COMMANDE)){
+			
+			//la creation d'une commande doit suivre une approbation
+			if(!this.etat.equals(EtatDemande.APPROUVEE)){
+				return false;
+			}
+		}
+		else if(action.getType().equals(TypeAction.CONFIRMATION_REPARATION)){
+			
+			//la confirmation de reparation doit logiquemeent suivre un ordre de maintenance ou une commande de reparation
+			if( ! (this.listeAction.size() > 0
+					&& ( this.getLastAction().getType().equals(TypeAction.CREATION_ORDRE_MAINTENANCE)
+							|| this.getLastAction().getType().equals(TypeAction.CREATION_COMMANDE))
+					)){
+				return false;
+			}
 		}
 		
+		//si il y avait une action avant, on passe son etat a TERMINE
+				Action lastAction = null;
+				
+				if(this.listeAction.size() > 0){
+					lastAction = this.listeAction.get(this.listeAction.size()-1);
+				}
+				
+				if(lastAction != null && lastAction.getEtatAction().equals("EN COURS")){
+					lastAction.setEtatAction("TERMINE");
+				}
+		
+		//binding de l'action a la demande
 		this.listeAction.add(action);
 		action.setDemande(this);
+		
+		return true;
 	}
 	
 	public boolean estClose(){
@@ -207,6 +271,12 @@ public class Demande {
 
 	public List<Action> getListeAction() {
 		return listeAction;
+	}
+	
+	private Action getLastAction(){
+		if(this.listeAction.size() == 0)
+			return null;
+		return this.listeAction.get(this.listeAction.size()-1);
 	}
 	
 	

@@ -130,5 +130,17 @@ public void setType(TypeAction type) {
     public void setNomAction(String nomAction){
     	this.nomAction = nomAction;
     }
+
+	public Date getDateAction() {
+		return dateAction;
+	}
+
+	public void setDateAction(Date dateAction) {
+		this.dateAction = dateAction;
+	}
+
+	public String getNomAction() {
+		return nomAction;
+	}
   
 }

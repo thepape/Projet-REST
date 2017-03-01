@@ -152,12 +152,16 @@ public class DemandeInternalController {
 		String username = this.getUsername();
 		bodyAction.setResponsable(username);
 		
-		Action action = ar.save(bodyAction);
+		
 		
 		//on ajoute l'action a la demande
-		demande.ajouterAction(action);
+		boolean actionPermise = demande.ajouterAction(bodyAction);
 		
+		if(!actionPermise){
+			return new ResponseEntity<>(HttpStatus.I_AM_A_TEAPOT);
+		}
 		
+		Action action = ar.save(bodyAction);
 		
 		//sauvegarde des changements
 		dr.save(demande);
