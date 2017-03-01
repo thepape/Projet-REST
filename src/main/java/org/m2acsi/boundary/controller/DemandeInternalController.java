@@ -276,15 +276,19 @@ public class DemandeInternalController {
 				.slash(action.getIdAction())
 				.withSelfRel();
 		
+		Link demandeLink = linkTo(methodOn(DemandeInternalController.class)
+				.getOneDemande(action.getDemande().getIdDemande()))
+				.withRel("demande");
+		
 		if(isCollection){
 			Link collectionLink = linkTo(methodOn(DemandeInternalController.class)
 					.getActionsFromDemande(action.getDemande().getIdDemande()))
 					.withRel("collection");
 			
-			return new Resource<>(action, selfLink, collectionLink);
+			return new Resource<>(action, selfLink, collectionLink, demandeLink);
 		}
 		
-		return new Resource<>(action, selfLink);
+		return new Resource<>(action, selfLink, demandeLink);
 	}
 	
 	private Resources<Resource<Action>> actionsToResource(Demande demande){
