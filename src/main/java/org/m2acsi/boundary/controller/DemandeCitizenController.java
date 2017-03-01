@@ -151,6 +151,9 @@ public class DemandeCitizenController {
 		
 		Demande demande = dr.save(bodyDemande);
 		
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.setLocation(linkTo(DemandeCitizenController.class).slash(demande.getIdDemande()).toUri());
+		
 		return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 	}
 	
