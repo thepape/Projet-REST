@@ -276,8 +276,8 @@ public class DemandeInternalController {
 				.slash(action.getIdAction())
 				.withSelfRel();
 		
-		Link demandeLink = linkTo(methodOn(DemandeInternalController.class)
-				.getOneDemande(action.getDemande().getIdDemande()))
+		Link demandeLink = linkTo(DemandeInternalController.class)
+				.slash(action.getDemande().getIdDemande())
 				.withRel("demande");
 		
 		if(isCollection){
@@ -308,15 +308,20 @@ public class DemandeInternalController {
 		
 		Link selfLink = linkTo(DemandeInternalController.class).slash(demande.getIdDemande()).withSelfRel();
 		
+		Link actionsLink = linkTo(DemandeInternalController.class)
+				.slash(demande.getIdDemande())
+				.slash("actions")
+				.withRel("actions");
+		
 		if(isCollection){
 			Link collectionLink = linkTo(methodOn(DemandeInternalController.class)
 					.getAllDemandes())
 					.withRel("collection ");
 			
-			return new Resource<>(demande, selfLink, collectionLink);
+			return new Resource<>(demande, selfLink, actionsLink, collectionLink);
 		}
 		
-		return new Resource<>(demande, selfLink);
+		return new Resource<>(demande, selfLink, actionsLink);
 	}
 	
 	private Resources<Resource<Demande>> demandeToResource(Iterable<Demande> demandes){
